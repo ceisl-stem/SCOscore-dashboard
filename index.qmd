@@ -1,5 +1,5 @@
 ---
-title: "scoScores Indiana Dashboard"
+title: "School Corporation Opportunity Score Dashboard for Indiana"
 author:
   - name: Jeremy Price 
     url: https://www.jeremyfprice.info/
@@ -20,8 +20,15 @@ toc: true
 citation:
   type: report
   issued: 2023
-  url: https://github.com/jeremyfprice/school-corporation-opportunity-score
+  url: https://github.com/jeremyfprice/SCOscore-dashboard
   doi: 10.17605/OSF.IO/CHJ38
+repo-url: https://github.com/jeremyfprice/SCOscore-dashboard
+mainfont: spectral
+sansfont: rubik
+monofont: "JetBrains Mono"
+format: html
+highlight-style: a11y
+code-overflow: wrap
 google-scholar: true
 ---
 
@@ -91,6 +98,8 @@ school community. It is a composite score that combines multiple factors, partic
 factors such as race and SES, as well as performance factors such as test scores and graduation
 pathway completion rates, to provide a more holistic view of school corporations.
 
+For more information, see the [documentation](https://jeremyfprice.github.io/scoscore/).
+
 
 ```{r prep-map, message = FALSE, warning=FALSE, output = FALSE}
 states <- sf::st_as_sf(map("state", region = "indiana", plot = FALSE, fill = TRUE))
@@ -159,13 +168,18 @@ datatable(
 
 ## Map of Indiana School Corporations
 
+The following is a map of the Indiana school corporations. You may tap or hover over
+a school corporation to see the SCOscore for the corporation.
 
 ```{r display-map, results = "asis"}
 ggplotly(sco_map)
 ```
 
-
 ## SCOscores by NCES Urban-Centric Locale Category
+
+The following is a plot of the SCOscores for Indiana school corporations by
+NCES defined urban-centric locale categories. You may hover or click on any point
+to see the data.
 
 ```{r plot-beeswarm, results = "asis"}
 SCO_frame$urban_centric_locale <- factor(
@@ -222,3 +236,6 @@ Data for these calculations are drawn from the following sources:
 * Indiana Department of Education's [Indiana Graduates Prepared to Succeed (GPS)](https://indianagps.doe.in.gov/)
 * Urban Institute's [Education Data Explorer](https://educationdata.urban.org/data-explorer) via
 the [educationdata](https://github.com/UrbanInstitute/education-data-package-r) R package
+
+## Acknowledgments {.appendix}
+This is a project of the Collaborative for Equitable and Inclusive STEM Learning (CEISL) at the IU School of Education-Indianapolis.

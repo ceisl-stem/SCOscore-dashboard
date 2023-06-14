@@ -1,0 +1,20 @@
+project:
+  type: website
+  output-dir: docs
+  
+theme: flatly
+
+website:
+  navbar:
+    right:
+      - icon: github
+        href: https://github.com/jeremyfprice/SCOscore-dashboard
+        aria-label: GitHub Repository
+      - icon: archive-fill
+        href: https://osf.io/fd4p9/?view_only=b29da55d90594779b06880a41ac2fea9
+        aria-label: Open Science Framework Repository
+  twitter-card: true
+  search: false
+  open-graph: true
+  title: "School Corporation Opportunity Scores Dashboard for Indiana"
+  site-url: https://jeremyfprice.github.io/SCOscore-dashboard/
