@@ -1,0 +1,224 @@
+---
+title: "scoScores Indiana Dashboard"
+author:
+  - name: Jeremy Price 
+    url: https://www.jeremyfprice.info/
+    affiliation: CEISL / IU School of Education-Indianapolis
+    affiliation_url: https://education.iupui.edu/
+    orcid: 0000-0002-6506-3526
+  - name: Akaash Arora
+    affiliation: CEISL / IU School of Education-Indianapolis
+    affiliation_url: https://education.iupui.edu/
+  - name: Maxim Bulanov
+    affiliation: CEISL / IU School of Education-Indianapolis
+    affiliation_url: https://education.iupui.edu/
+  - name: AJ Knoors
+    affiliation: CEISL / IU School of Education-Indianapolis
+    affiliation_url: https://education.iupui.edu/
+license: "CC BY-SA"
+toc: true
+citation:
+  type: report
+  issued: 2023
+  url: https://github.com/jeremyfprice/school-corporation-opportunity-score
+  doi: 10.17605/OSF.IO/CHJ38
+google-scholar: true
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  comment = "#>",
+  echo = FALSE,
+  message = FALSE,
+  warning = FALSE
+)
+```
+
+```{r load-libraries}
+library(readr)
+library(tidyr)
+library(dplyr)
+library(rio)
+library(DT)
+library(ggplot2)
+library(ggpubr)
+library(plotly)
+library(ggbeeswarm)
+library(edbuildmapr)
+library(maps)
+library(mapdata)
+library(ggmap)
+library(ggrepel)
+library(sf)
+library(showtext)
+
+ucl_palette <- c(
+  "City large" = "#990000",
+  "City midsize" = "#F23A3F",
+  "City small" = "#FF636A",
+  "Suburb large" = "#FFAA00",
+  "Suburb midsize" = "#FFD563",
+  "Suburb small" = "#FFE694",
+  "Town fringe" = "#056E41",
+  "Town distant" = "#63B363",
+  "Town remote" = "#A7D094",
+  "Rural fringe" = "#006298",
+  "Rural distant" = "#63B1D3",
+  "Rural remote" = "#94D2E7"
+)
+```
+
+```{r load-fonts, echo = FALSE, include=FALSE}
+font_add_google("Rubik", "rubik", regular.wt = 700)
+font_add_google("JetBrains Mono", "jetbrains", regular.wt = 700)
+font_add_google("Spectral", "spectral", regular.wt = 700)
+```
+
+```{r read-data}
+SCO_frame <- import("https://osf.io/download/49c27/", format = "csv") |>
+  na.omit()
+
+SCO_frame$urm_pct <- round(SCO_frame$urm_pct, digits = 2)
+SCO_frame$frl_pct = round(SCO_frame$frl_pct, digits = 2)
+SCO_frame$academic = round(SCO_frame$academic, digits = 2)
+SCO_frame$scoScore = round(SCO_frame$scoScore, digits = 2)
+```
+
+## Introduction
+
+The School Corporation Opportunity Score (SCOscore) is a measure of potentiality for learners in a
+school community. It is a composite score that combines multiple factors, particularly structural
+factors such as race and SES, as well as performance factors such as test scores and graduation
+pathway completion rates, to provide a more holistic view of school corporations.
+
+
+```{r prep-map, message = FALSE, warning=FALSE, output = FALSE}
+states <- sf::st_as_sf(map("state", region = "indiana", plot = FALSE, fill = TRUE))
+
+in_sc_shapes <- sd_shapepull("2019", with_data = TRUE) |>
+  filter(State == "Indiana") |>
+  select(leaid = GEOID, geometry) |>
+  mutate(leaid = as.numeric(leaid))
+
+SCO_frame <- SCO_frame |>
+  right_join(in_sc_shapes)
+
+school_corp_map <- st_as_sf(SCO_frame)
+
+sco_map <- ggplot(data = states) +
+  geom_sf(data = states, fill = "#eeeeee") +
+  geom_sf(data = school_corp_map, color = "#243142", aes(
+    label = lea_name,
+    fill = scoScore)) +
+  scale_fill_steps2(
+    name = "SCOscore",
+    low = "#FFF4C6",
+    high = "#990000",
+    mid = "#FFAA00",
+    midpoint = 1.1,
+    breaks = c(0, 0.6, 0.8, 1, 1.2, 1.4)
+  ) +
+  coord_sf(xlim = c(-88.5, -84.5), ylim = c(37.5, 42), expand = FALSE) +
+  theme_minimal()  +
+  theme(panel.grid.major = element_blank(),
+        axis.text = element_blank(),
+        axis.title = element_blank())
+```
+
+## Table of School Corporations
+
+The following is a table with all of the school corporations in Indiana. You can
+sort and search to identify trends or a specific school corporation.
+
+```{r}
+
+SCO_display_frame <- SCO_frame |>
+  select(lea_name, urban_centric_locale, enrollment, urm_pct, frl_pct, academic, scoScore) |>
+  arrange(desc(scoScore), desc(enrollment), lea_name) |>
+  na.omit()
+#  select(-enrollment)
+
+datatable(
+  SCO_display_frame,
+  rownames = FALSE,
+  colnames = c(
+    "Corporation",
+    "Locale",
+    "Enrollment",
+    "%URM",
+    "%FRL",
+    "AcScore",
+    "SCOscore"
+    ),
+  options = list(
+  pageLength = 5)
+  ) |>
+  formatStyle(columns = c(2), fontSize = "90%")
+
+```
+
+## Map of Indiana School Corporations
+
+
+```{r display-map, results = "asis"}
+ggplotly(sco_map)
+```
+
+
+## SCOscores by NCES Urban-Centric Locale Category
+
+```{r plot-beeswarm, results = "asis"}
+SCO_frame$urban_centric_locale <- factor(
+  SCO_frame$urban_centric_locale,
+  levels = c(
+    "City large",
+    "City midsize",
+    "City small",
+    "Suburb large",
+    "Suburb midsize",
+    "Suburb small",
+    "Town fringe",
+    "Town distant",
+    "Town remote",
+    "Rural fringe",
+    "Rural distant",
+    "Rural remote"
+  )
+)
+urcl_swarm <- ggplot(
+  SCO_frame,
+  aes(
+    label = lea_name,
+    x = urban_centric_locale,
+    y = scoScore,
+    color = scoScore
+  )
+) +
+  geom_beeswarm(cex = 1.5, corral = "wrap", shape = 18, size = 1) + #, method = "center"
+  annotate("segment", x = 0, xend = 12.5, y = 1, yend = 1, color = "#A7A9AB",
+           linetype = "dotted") +
+  scale_color_steps2(
+    low = "#FFF4C6",
+    high = "#990000",
+    mid = "#FFAA00",
+    midpoint = 1.1,
+    breaks = c(0, 0.6, 0.8, 1, 1.2, 1.4)
+  ) +
+  ylim(0, 2) +
+  ylab("School Corporation Opportunity Score") +
+  xlab("NCES Urban-Centric Locale Category") +
+  theme_pubr() +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    legend.position = "none"
+  )
+ggplotly(urcl_swarm)
+```
+
+## Data Sources
+
+Data for these calculations are drawn from the following sources:
+
+* Indiana Department of Education's [Indiana Graduates Prepared to Succeed (GPS)](https://indianagps.doe.in.gov/)
+* Urban Institute's [Education Data Explorer](https://educationdata.urban.org/data-explorer) via
+the [educationdata](https://github.com/UrbanInstitute/education-data-package-r) R package
