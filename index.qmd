@@ -82,7 +82,7 @@ font_add_google("Spectral", "spectral", regular.wt = 700)
 ```
 
 ```{r read-data}
-SCO_frame <- import("https://osf.io/download/49c27/", format = "csv") |>
+SCO_frame <- import("https://osf.io/download/dkjn6/", format = "csv") |>
   na.omit()
 
 SCO_frame$urm_pct <- round(SCO_frame$urm_pct, digits = 2)
@@ -98,7 +98,7 @@ school community. It is a composite score that combines multiple factors, partic
 factors such as race and SES, as well as performance factors such as test scores and graduation
 pathway completion rates, to provide a more holistic view of school corporations.
 
-For more information, see the [documentation](https://jeremyfprice.github.io/scoscore/).
+For more information, see the [documentation](https://ceisl-stem.github.io/scoscore/).
 
 
 ```{r prep-map, message = FALSE, warning=FALSE, output = FALSE}
